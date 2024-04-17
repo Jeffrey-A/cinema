@@ -4,8 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+
 
 @RestController
 public class SeatsController {
@@ -24,6 +28,16 @@ public class SeatsController {
         }
         seatData.setSeats(seats);
         return seatData;
+    }
+
+    @PostMapping("/purchase")
+    public ResponseEntity<SeatWithPrice> purchaseSeat(@RequestBody Seat seat) {
+        int row = seat.getRow();
+        int column = seat.getColumn();
+
+        SeatWithPrice purchaseSeat = new SeatWithPrice(row, column, 10);
+        
+        return ResponseEntity.ok(purchaseSeat);
     }
     
     static class SeatData {
@@ -79,6 +93,24 @@ public class SeatsController {
 
         public void setColumn(int column) {
             this.column = column;
+        }
+    }
+
+    static class SeatWithPrice extends Seat {
+        private int price = 0;
+
+        SeatWithPrice(int row, int column, int price) {
+            super(row, column);
+            this.price = price;
+
+        }
+
+        public void setPrice (int price) {
+            this.price = price;
+        }
+
+        public int getPrice() {
+            return this.price;
         }
     }
 
