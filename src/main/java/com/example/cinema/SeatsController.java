@@ -39,7 +39,7 @@ public class SeatsController {
         int row = seat.getRow();
         int column = seat.getColumn();
 
-        if (row > 9 || column > 9) {
+        if (!this.isValidSeat(seat)) {
             ErrorResponse errorResponse = new ErrorResponse("The number of a row or a column is out of bounds!");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
@@ -53,6 +53,17 @@ public class SeatsController {
         purchasedSeats.add(purchaseSeat);
         
         return ResponseEntity.ok(purchaseSeat);
+    }
+
+    public boolean isValidSeat(Seat seat) {
+        int row = seat.getRow();
+        int column = seat.getColumn();
+
+        if (row >= 1 && row <= 9 && column >= 1 && column <= 9) {
+            return true;
+        }
+
+        return false;
     }
 
     public boolean isSeatAvailable(Seat seat) {
