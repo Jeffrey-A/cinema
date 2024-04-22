@@ -1,8 +1,11 @@
 package com.example.cinema;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
-
+import java.util.UUID;
+import java.util.Iterator;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,7 +18,7 @@ import org.springframework.http.ResponseEntity;
 
 @RestController
 public class SeatsController {
-    List<Seat> purchasedSeats = new ArrayList<>();
+    List<Ticket> purchasedSeats = new ArrayList<>();
 
     @GetMapping("/seats")
      public SeatData getSeatsData() {
@@ -50,9 +53,45 @@ public class SeatsController {
         }
 
         Seat purchaseSeat = new Seat(row, column, 10);
-        purchasedSeats.add(purchaseSeat);
+
+        Ticket ticket = new Ticket(purchaseSeat);
+
+        purchasedSeats.add(ticket);
+
+        HashMap<String, Object> returnVal = new HashMap<>();
+        returnVal.put("token", ticket.getToken());
+        returnVal.put("ticket", ticket.getSeat());
         
-        return ResponseEntity.ok(purchaseSeat);
+        return ResponseEntity.ok(returnVal);
+    }
+
+    @PostMapping("/return")
+    public ResponseEntity<?> returnTicket(@RequestBody Token token) {
+        String tokenVal = token.getToken();
+        HashMap<String, Object> returnVal = new HashMap<>();
+        boolean isTokenValid = false;
+
+        Iterator<Ticket> iterator = this.purchasedSeats.iterator();
+        while (iterator.hasNext()) {
+            Ticket ticket = iterator.next();
+            String ticketToken = ticket.getToken();
+
+
+
+            if (tokenVal.equals(ticketToken)) {
+                returnVal.put("ticket", ticket.getSeat());
+                isTokenValid = true;
+                iterator.remove();
+                break;
+            }
+        }
+
+        if (isTokenValid) {
+            return ResponseEntity.ok(returnVal);
+        }
+
+        ErrorResponse errorResponse = new ErrorResponse("Wrong token!");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     public boolean isValidSeat(Seat seat) {
@@ -70,7 +109,9 @@ public class SeatsController {
         int row = seat.getRow();
         int column = seat.getColumn();
 
-        for (Seat purchasedSeat: this.purchasedSeats) {
+        for (Ticket ticket: this.purchasedSeats) {
+            Seat purchasedSeat = ticket.getSeat();
+
             if (purchasedSeat.getRow() == row && purchasedSeat.getColumn() == column) {
                 return false;
             }
@@ -143,6 +184,42 @@ public class SeatsController {
             return this.price;
         }
     }
+
+    static class Ticket {
+        private Token token;
+        private Seat ticket;
+
+        Ticket(Seat seat) {
+            this.ticket = seat;
+            this.token = new Token();
+        }
+
+        Seat getSeat() {
+            return this.ticket;
+        }
+
+        public String getToken() {
+            return this.token.getToken();
+        }
+    }
+
+    static class Token {
+        private String token;
+
+        Token() {
+            this.token = this.createToken();
+        }
+
+        public String createToken() {
+            UUID uuid = UUID.randomUUID();
+            return uuid.toString();
+        }
+
+        public String getToken() {
+            return this.token;
+        }
+    }
+
     static class ErrorResponse {
         private String error;
 
