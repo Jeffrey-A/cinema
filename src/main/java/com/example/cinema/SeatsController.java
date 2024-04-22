@@ -56,7 +56,9 @@ public class SeatsController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
 
-        Seat purchaseSeat = new Seat(row, column, 10);
+        int price = row <= 4 ? 10 : 8;
+
+        Seat purchaseSeat = new Seat(row, column, price);
 
         Ticket ticket = new Ticket(purchaseSeat);
 
