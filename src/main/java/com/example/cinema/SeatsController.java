@@ -9,6 +9,7 @@ import java.util.Iterator;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.HttpStatus;
@@ -18,13 +19,16 @@ import org.springframework.http.ResponseEntity;
 
 @RestController
 public class SeatsController {
+    int cinemaSize = 9;
+    int totalSeats = cinemaSize * cinemaSize;
+
     List<Ticket> purchasedSeats = new ArrayList<>();
 
     @GetMapping("/seats")
      public SeatData getSeatsData() {
         SeatData seatData = new SeatData();
-        seatData.setRows(9);
-        seatData.setColumns(9);
+        seatData.setRows(cinemaSize);
+        seatData.setColumns(cinemaSize);
 
         List<Seat> seats = new ArrayList<>();
         for (int row = 1; row <= seatData.getRows(); row++) {
@@ -92,6 +96,29 @@ public class SeatsController {
 
         ErrorResponse errorResponse = new ErrorResponse("Wrong token!");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<?> getStats(@RequestParam(required = false, defaultValue = "") String password) {
+        if (password.equals("super_secret")) {
+            HashMap<String, Integer> returnVal = new HashMap<>();
+            returnVal.put("income", this.getCurrentIncome());
+            returnVal.put("available", this.totalSeats - purchasedSeats.size());
+            returnVal.put("purchased", purchasedSeats.size());
+            return ResponseEntity.ok(returnVal);
+        }
+
+        ErrorResponse errorResponse = new ErrorResponse("The password is wrong!");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    public int getCurrentIncome() {
+        int income = 0;
+        for(Ticket ticket: this.purchasedSeats) {
+            Seat seat = ticket.getSeat();
+            income += seat.getPrice();
+        }
+        return income;
     }
 
     public boolean isValidSeat(Seat seat) {
